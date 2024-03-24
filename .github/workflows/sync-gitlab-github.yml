@@ -45,6 +45,10 @@ jobs:
           if response.status_code == 200:
               activities = response.json()
 
+              # Configuration de Git avec votre email et nom
+              os.system('git config --global user.email "hydris.bessa@gmail.com"')
+              os.system('git config --global user.name "Hydris Bessa"')
+
               # Traitement simple pour démonstration - à personnaliser
               for activity in activities:
                   # Créer un commit vide pour chaque activité GitLab
@@ -52,10 +56,6 @@ jobs:
           else:
               print(f"Erreur lors de la récupération des activités: {response.status_code}")
               print(f"Détails: {response.text}")
-
-          # Configuration de Git avec votre email GitHub
-          os.system('git config --global user.email "hydris.bessa@gmail.com"')
-          os.system('git config --global user.name "GitHub Action"')
 
           # Pousser les commits au référentiel GitHub
           os.system('git push')
