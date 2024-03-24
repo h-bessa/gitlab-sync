@@ -38,7 +38,7 @@ jobs:
           date_format = "%Y-%m-%d"
           
           # URL de l'API GitLab pour les événements utilisateur
-          url = f"https://gitlab.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}"
+          url = f"https://aws-git.inadvans.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}"
 
           headers = {"Authorization": f"Bearer {os.getenv('GITLAB_TOKEN')}"}
           response = requests.get(url, headers=headers)
