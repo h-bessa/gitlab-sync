@@ -25,14 +25,13 @@ jobs:
       - name: Fetch and Process GitLab Activity
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }} # Utilise maintenant le secret pour l'ID utilisateur
+          GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }}
         run: |
           import requests
           import datetime
           import os
-          import json
 
-          # Configurez pour récupérer les activités depuis une date spécifique ou toute l'activité
+          # Configure pour récupérer les activités depuis une date spécifique ou toute l'activité
           start_date = datetime.date(2015, 1, 1)  # Date très antérieure pour simuler "toute l'activité"
           end_date = datetime.date.today()
           date_format = "%Y-%m-%d"
@@ -54,10 +53,10 @@ jobs:
               print(f"Erreur lors de la récupération des activités: {response.status_code}")
               print(f"Détails: {response.text}")
 
-          # Configuration de Git avec votre email GitHub
-          os.system('git config --global user.email "hydris.bessa@gmail.com"')
-          os.system('git config --global user.name "GitHub Action"')
-          os.system('git add ACTIVITY.md')
-          os.system('git commit -m "Mise à jour hebdomadaire de l\'activité GitLab"')
-          os.system('git push')
-        shell: python
+      - name: Commit and Push changes
+        run: |
+          git config --global user.email "hydris.bessa@gmail.com"
+          git config --global user.name "GitHub Action"
+          git add ACTIVITY.md
+          git commit -m "Mise à jour hebdomadaire de l'activité GitLab" || echo "No changes to commit"
+          git push
