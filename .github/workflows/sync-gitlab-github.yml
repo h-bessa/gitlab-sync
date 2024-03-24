@@ -72,8 +72,11 @@ jobs:
           for activity in activities:
               # Créer un commit vide pour chaque activité GitLab avec la date correcte
               commit_date = datetime.datetime.strptime(activity['created_at'][:10], date_format)
-              subprocess.run(["git", "commit", "--allow-empty", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}"])
+              subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
+
+          # Réécrire l'historique Git pour modifier la date de chaque commit
+          subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "-- --branches", "--tags"])
 
           # Pousser les commits au référentiel GitHub
-          os.system('git push')
+          os.system('git push --force --tags')
         shell: python
