@@ -22,68 +22,67 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests
 
-          - name: Fetch and Process GitLab Activity
-          env:
-            GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-            GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }}
-          run: |
-            import requests
-            import datetime
-            import os
-            import subprocess
+      - name: Fetch and Process GitLab Activity
+        env:
+          GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
+          GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }}
+        run: |
+          import requests
+          import datetime
+          import os
+          import subprocess
 
-            # Configurez pour récupérer les activités depuis le 02 mai 2023
-            start_date = datetime.date(2023, 5, 2)
-            end_date = datetime.date.today()
-            date_format = "%Y-%m-%d"
+          # Configurez pour récupérer les activités depuis le 02 mai 2023
+          start_date = datetime.date(2023, 5, 2)
+          end_date = datetime.date.today()
+          date_format = "%Y-%m-%d"
 
-            # URL de l'API GitLab pour les événements utilisateur
-            url = f"https://aws-git.inadvans.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}&per_page=100"
+          # URL de l'API GitLab pour les événements utilisateur
+          url = f"https://aws-git.inadvans.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}&per_page=100"
 
-            headers = {"Authorization": f"Bearer {os.getenv('GITLAB_TOKEN')}"}
+          headers = {"Authorization": f"Bearer {os.getenv('GITLAB_TOKEN')}"}
 
-            # Liste pour stocker toutes les activités
-            activities = []
+          # Liste pour stocker toutes les activités
+          activities = []
 
-            # Boucle pour itérer sur toutes les pages de résultats
-            page = 1
-            while True:
-                # Récupérer les activités pour la page actuelle
-                response = requests.get(url + f"&page={page}", headers=headers)
-                if response.status_code == 200:
-                    page_activities = response.json()
-                    activities.extend(page_activities)
+          # Boucle pour itérer sur toutes les pages de résultats
+          page = 1
+          while True:
+              # Récupérer les activités pour la page actuelle
+              response = requests.get(url + f"&page={page}", headers=headers)
+              if response.status_code == 200:
+                  page_activities = response.json()
+                  activities.extend(page_activities)
 
-                    # Vérifier s'il y a d'autres pages de résultats
-                    if len(page_activities) < 100:
-                        break
+                  # Vérifier s'il y a d'autres pages de résultats
+                  if len(page_activities) < 100:
+                      break
 
-                    page += 1
-                else:
-                    print(f"Erreur lors de la récupération des activités: {response.status_code}")
-                    print(f"Détails: {response.text}")
-                    break
+                  page += 1
+              else:
+                  print(f"Erreur lors de la récupération des activités: {response.status_code}")
+                  print(f"Détails: {response.text}")
+                  break
 
-            # Configuration de Git avec votre email et nom
-            os.system('git config --global user.email "hydris.bessa@gmail.com"')
-            os.system('git config --global user.name "Hydris Bessa"')
+          # Configuration de Git avec votre email et nom
+          os.system('git config --global user.email "hydris.bessa@gmail.com"')
+          os.system('git config --global user.name "Hydris Bessa"')
 
-            # Traitement simple pour démonstration - à personnaliser
-            for activity in activities:
-                # Créer un commit vide pour chaque activité GitLab avec la date correcte
-                commit_date = datetime.datetime.strptime(activity['created_at'][:10], date_format)
-                subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
+          # Traitement simple pour démonstration - à personnaliser
+          for activity in activities:
+              # Créer un commit vide pour chaque activité GitLab avec la date correcte
+              commit_date = datetime.datetime.strptime(activity['created_at'][:10], date_format)
+              subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
 
-                # Vérifier si l'adresse e-mail de l'auteur du commit GitLab est différente de celle associée à votre compte GitHub
-                author_email = subprocess.check_output(["git", "log", "--format=%ae", "-1"]).decode().strip()
-                if author_email != "hydris.bessa@gmail.com":
-                    # Mettre à jour l'adresse e-mail de l'auteur du commit GitLab
-                    subprocess.run(["git", "commit", "--amend", "--reset-author", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
+              # Vérifier si l'adresse e-mail de l'auteur du commit GitLab est différente de celle associée à votre compte GitHub
+              author_email = subprocess.check_output(["git", "log", "--format=%ae", "-1"]).decode().strip()
+              if author_email != "hydris.bessa@gmail.com":
+                  # Mettre à jour l'adresse e-mail de l'auteur du commit GitLab
+                  subprocess.run(["git", "commit", "--amend", "--reset-author", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
 
-            # Réécrire l'historique Git pour modifier la date de chaque commit
-            subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "--force -- --all"])
+          # Réécrire l'historique Git pour modifier la date de chaque commit
+          subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "--force -- --all"])
 
-            # Pousser les modifications vers le dépôt GitHub
-            subprocess.run(["git", "push", "origin", "main"])
-
+          # Pousser les modifications vers le dépôt GitHub
+          subprocess.run(["git", "push", "origin", "main"])
         shell: python
