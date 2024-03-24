@@ -3,7 +3,7 @@ name: Sync GitLab Activity to GitHub
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 0' # Exécute chaque dimanche à minuit
+    - cron: '0 0 * * 0' # Exécute chaque dimanche à minuit  
 
 jobs:
   sync_activity:
