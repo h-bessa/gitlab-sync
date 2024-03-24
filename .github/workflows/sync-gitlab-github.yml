@@ -70,8 +70,9 @@ jobs:
 
           # Traitement simple pour démonstration - à personnaliser
           for activity in activities:
-              # Créer un commit vide pour chaque activité GitLab
-              subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}"])
+              # Créer un commit vide pour chaque activité GitLab avec la date correcte
+              commit_date = datetime.datetime.strptime(activity['created_at'][:10], date_format)
+              subprocess.run(["git", "commit", "--allow-empty", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}"])
 
           # Pousser les commits au référentiel GitHub
           os.system('git push')
