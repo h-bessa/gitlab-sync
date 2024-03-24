@@ -76,9 +76,9 @@ jobs:
 
               # Vérifier si l'adresse e-mail de l'auteur du commit GitLab est différente de celle associée à votre compte GitHub
               author_email = subprocess.check_output(["git", "log", "--format=%ae", "-1"]).decode().strip()
-              if author_email != "hydris.bessa@gmail.com":
-                  # Mettre à jour l'adresse e-mail de l'auteur du commit GitLab
-                  subprocess.run(["git", "commit", "--amend", "--reset-author", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
+              
+              # Mettre à jour l'adresse e-mail de l'auteur du commit GitLab
+              subprocess.run(["git", "commit", "--amend", "--reset-author", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
 
           # Réécrire l'historique Git pour modifier la date de chaque commit
           subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "--force -- --all"])
