@@ -3,7 +3,7 @@ name: Sync GitLab Activity to GitHub
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * 0" # Exécute chaque dimanche à minuit
+    - cron: "0 0 * * 1" # Exécute chaque lundi à minuit
 
 jobs:
   sync_activity:
@@ -32,9 +32,13 @@ jobs:
           import os
           import subprocess
 
-          # Configurez pour récupérer les activités depuis le 02 mai 2023
-          start_date = datetime.date(2023, 12, 2)
-          end_date = datetime.date.today()
+          # Calculer la date de début de la semaine dernière (lundi)
+          today = datetime.date.today()
+          weekday = today.weekday()
+          start_date = today - datetime.timedelta(days=weekday + 7)
+
+          # Calculer la date de fin de la semaine dernière (dimanche)
+          end_date = start_date + datetime.timedelta(days=6)
           date_format = "%Y-%m-%d"
 
           # URL de l'API GitLab pour les événements utilisateur
