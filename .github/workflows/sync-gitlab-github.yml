@@ -38,24 +38,40 @@ jobs:
           date_format = "%Y-%m-%d"
 
           # URL de l'API GitLab pour les événements utilisateur
-          url = f"https://aws-git.inadvans.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}"
+          url = f"https://aws-git.inadvans.com/api/v4/users/{os.getenv('GITLAB_USER_ID')}/events?after={start_date.strftime(date_format)}&before={end_date.strftime(date_format)}&per_page=100"
 
           headers = {"Authorization": f"Bearer {os.getenv('GITLAB_TOKEN')}"}
-          response = requests.get(url, headers=headers)
-          if response.status_code == 200:
-              activities = response.json()
 
-              # Configuration de Git avec votre email et nom
-              os.system('git config --global user.email "hydris.bessa@gmail.com"')
-              os.system('git config --global user.name "Hydris Bessa"')
+          # Liste pour stocker toutes les activités
+          activities = []
 
-              # Traitement simple pour démonstration - à personnaliser
-              for activity in activities:
-                  # Créer un commit vide pour chaque activité GitLab
-                  subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}"])
-          else:
-              print(f"Erreur lors de la récupération des activités: {response.status_code}")
-              print(f"Détails: {response.text}")
+          # Boucle pour itérer sur toutes les pages de résultats
+          page = 1
+          while True:
+              # Récupérer les activités pour la page actuelle
+              response = requests.get(url + f"&page={page}", headers=headers)
+              if response.status_code == 200:
+                  page_activities = response.json()
+                  activities.extend(page_activities)
+
+                  # Vérifier s'il y a d'autres pages de résultats
+                  if len(page_activities) < 100:
+                      break
+
+                  page += 1
+              else:
+                  print(f"Erreur lors de la récupération des activités: {response.status_code}")
+                  print(f"Détails: {response.text}")
+                  break
+
+          # Configuration de Git avec votre email et nom
+          os.system('git config --global user.email "hydris.bessa@gmail.com"')
+          os.system('git config --global user.name "Hydris Bessa"')
+
+          # Traitement simple pour démonstration - à personnaliser
+          for activity in activities:
+              # Créer un commit vide pour chaque activité GitLab
+              subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}"])
 
           # Pousser les commits au référentiel GitHub
           os.system('git push')
