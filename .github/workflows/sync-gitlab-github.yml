@@ -3,7 +3,7 @@ name: Sync GitLab Activity to GitHub
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 0' # Exécute chaque dimanche à minuit  
+    - cron: '0 0 * * 0' # Exécute chaque dimanche à minuit
 
 jobs:
   sync_activity:
@@ -25,7 +25,7 @@ jobs:
       - name: Fetch and Process GitLab Activity
         env:
           GITLAB_TOKEN: ${{ secrets.GITLAB_TOKEN }}
-          GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }} # Utilise maintenant le secret pour l'ID utilisateur
+          GITLAB_USER_ID: ${{ secrets.GITLAB_USER_ID }}
         run: |
           import requests
           import datetime
@@ -74,9 +74,15 @@ jobs:
               commit_date = datetime.datetime.strptime(activity['created_at'][:10], date_format)
               subprocess.run(["git", "commit", "--allow-empty", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
 
-          # Réécrire l'historique Git pour modifier la date de chaque commit
-          subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "-- --branches", "--tags"])
+              # Vérifier si l'adresse e-mail de l'auteur du commit GitLab est différente de celle associée à votre compte GitHub
+              author_email = subprocess.check_output(["git", "log", "--format=%ae", "-1"]).decode().strip()
+              if author_email != "hydris.bessa@gmail.com":
+                  # Mettre à jour l'adresse e-mail de l'auteur du commit GitLab
+                  subprocess.run(["git", "commit", "--amend", "--reset-author", "-m", f"GitLab activity: {activity['action_name']} on {activity['created_at']}", "--date", f"{commit_date.year}-{commit_date.month}-{commit_date.day}T{commit_date.hour}:{commit_date.minute}:{commit_date.second}"])
 
-          # Pousser les commits au référentiel GitHub
-          os.system('git push --force --tags')
-        shell: python
+          # Réécrire l'historique Git pour modifier la date de chaque commit
+          subprocess.run(["git", "filter-branch", "--env-filter", f"export GIT_COMMITTER_DATE='{datetime.datetime.now():%Y-%m-%dT%H:%M:%S%z}'", "--tag-name-filter", "cat", "--force -- --all"])
+
+          # Pousser les modifications vers le dépôt GitHub
+          subprocess.run(["git", "push", "origin", "main"])
+            
